@@ -1,1 +1,155 @@
+import re
+import time
+import random
 
+# NORMALISE NAME
+def normalise_name(name):
+    return " ".join(name.lower().split())
+
+
+# NORMALISE PHONE NUMBER
+def normalise_phone(phone):
+    digits = "".join(filter(str.isdigit, phone))
+
+    if len(digits) == 12 and digits.startswith("91"):
+        digits = digits[2:]
+    elif len(digits) == 11 and digits.startswith("0"):
+        digits = digits[1:]
+
+    return digits
+
+
+# NORMALISE EMAIL
+def normalise_email(email):
+    return email.strip().lower()
+
+
+# DICTIONARY METHOD
+def merge_contacts(contacts):
+    merged = {}
+
+    for index, contact in enumerate(contacts):
+        name, phone, email = contact
+
+        number = normalise_phone(phone)
+
+        # Missing phone numbers are kept separate
+        key = number if number else "missing_" + str(index)
+
+        if key not in merged:
+            merged[key] = {
+                "name": name,
+                "numbers": set(),
+                "emails": set()
+            }
+
+        if number:
+            merged[key]["numbers"].add(number)
+
+        if email.strip():
+            merged[key]["emails"].add(normalise_email(email))
+
+    return list(merged.values())
+
+
+# PAIRWISE COMPARISON METHOD
+def pairwise_count(contacts):
+    count = 0
+
+    for i in range(len(contacts)):
+        for j in range(i + 1, len(contacts)):
+            count += 1
+
+            if normalise_phone(contacts[i][1]) == normalise_phone(contacts[j][1]):
+                pass
+
+    return count
+
+
+# USER INPUT
+n = int(input("Enter number of contacts: "))
+
+contacts = []
+
+for i in range(n):
+    print("\nContact", i + 1)
+
+    name = input("Enter name: ")
+    phone = input("Enter phone number: ")
+    email = input("Enter email: ")
+
+    contacts.append((name, phone, email))
+
+
+# MERGE CONTACTS
+start = time.perf_counter()
+result = merge_contacts(contacts)
+dictionary_time = time.perf_counter() - start
+
+
+# DISPLAY MERGED CONTACTS
+print("\n--- MERGED CONTACTS ---")
+
+for contact in result:
+    print("\nName:", contact["name"])
+    print("Phone numbers:", contact["numbers"])
+    print("Emails:", contact["emails"])
+
+print("\nTotal contacts entered:", n)
+print("Unique contacts:", len(result))
+print("Dictionary merging time:", dictionary_time * 1000, "ms")
+
+
+# VERIFY SMALL INPUT
+if n <= 20:
+    print("\n--- VALIDATION ---")
+    print("Contacts successfully merged.")
+    print("Duplicate numbers are stored only once.")
+
+
+# PERFORMANCE TEST
+print("\n--- PERFORMANCE TEST ---")
+
+for size in [1000, 100000]:
+
+    test_contacts = []
+
+    for i in range(size):
+        person = i // 2
+
+        test_contacts.append((
+            "Person " + str(person),
+            "+91 98400 " + str(10000 + person),
+            "person" + str(person) + "@gmail.com"
+        ))
+
+    # Dictionary timing
+    start = time.perf_counter()
+    merged = merge_contacts(test_contacts)
+    dict_time = time.perf_counter() - start
+
+    print("\nNumber of contacts:", size)
+    print("Dictionary unique contacts:", len(merged))
+    print("Dictionary time:", round(dict_time * 1000, 3), "ms")
+
+    if size == 1000:
+        start = time.perf_counter()
+        comparisons = pairwise_count(test_contacts)
+        pair_time = time.perf_counter() - start
+
+        print("Pairwise comparisons:", comparisons)
+        print("Pairwise time:", round(pair_time * 1000, 3), "ms")
+
+        estimated = pair_time * (
+            (100000 * 99999) / (1000 * 999)
+        )
+
+        print("Estimated pairwise time for 100000 contacts:",
+              round(estimated, 2), "seconds")
+
+    else:
+        print("Pairwise comparisons required:",
+              size * (size - 1) // 2)
+        print("Pairwise execution skipped because of high cost.")
+
+print("\nVALIDATION COMPLETED")
