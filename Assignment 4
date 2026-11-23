@@ -1,1 +1,168 @@
+import os
 
+# Create sample department files
+data = {
+    "dept1.txt": [
+        "1001|Anu|CSE|anu@gmail.com|Dance;Music",
+        "1002|Bala|IT|bala@gmail.com|Drama",
+        "1003|Charan|ECE|charan.gmail.com|Music",
+        "damaged line"
+    ],
+    "dept2.txt": [
+        "1002|Bala|IT|bala@gmail.com|Drama;Singing",
+        "1004|Divya|EEE|divya@gmail.com|Dance"
+    ],
+    "dept3.txt": [
+        "1005|Esha|MECH|esha@gmail.com|Music;Drama"
+    ],
+    "dept4.txt": [
+        "1006|Farhan|CSE|farhan@gmail.com|Singing"
+    ]
+}
+
+for filename, records in data.items():
+    with open(filename, "w") as f:
+        for record in records:
+            f.write(record + "\n")
+
+if os.path.exists("dept5.txt"):
+    os.remove("dept5.txt")
+
+
+# Main program
+master = {}
+errors = []
+duplicates = 0
+invalid = 0
+damaged = 0
+missing = 0
+
+for i in range(1, 6):
+    filename = "dept" + str(i) + ".txt"
+
+    try:
+        with open(filename, "r") as f:
+
+            for line_no, line in enumerate(f, 1):
+                try:
+                    fields = line.strip().split("|")
+
+                    if len(fields) != 5:
+                        raise ValueError("Damaged line")
+
+                    reg, name, dept, email, events = fields
+
+                    if not reg or not name or not dept:
+                        raise ValueError("Missing required field")
+
+                    email = email.strip().lower()
+
+                    parts = email.split("@")
+
+                    if (len(parts) != 2 or not parts[0]
+                        or "." not in parts[1]
+                        or parts[1].startswith(".")
+                        or parts[1].endswith(".")):
+                        invalid += 1
+                        errors.append(filename + ": Invalid email for " + reg)
+                        continue
+
+                    event_list = [
+                        e.strip() for e in events.split(";") if e.strip()
+                    ]
+
+                    if not event_list:
+                        raise ValueError("No events entered")
+
+                    if reg in master:
+                        duplicates += 1
+                        master[reg]["events"].update(event_list)
+                        errors.append(filename + ": Duplicate registration " + reg)
+
+                    else:
+                        master[reg] = {
+                            "name": name,
+                            "department": dept,
+                            "email": email,
+                            "events": set(event_list)
+                        }
+
+                except ValueError as error:
+                    damaged += 1
+                    errors.append(
+                        filename + " line " + str(line_no) + ": " + str(error)
+                    )
+
+    except FileNotFoundError:
+        missing += 1
+        errors.append(filename + ": File not found")
+
+
+# Write master list
+with open("master_list.txt", "w") as f:
+    for reg, details in sorted(master.items()):
+        f.write(
+            reg + "|" + details["name"] + "|"
+            + details["department"] + "|"
+            + details["email"] + "|"
+            + ";".join(sorted(details["events"])) + "\n"
+        )
+
+
+# Create event-wise participant files
+event_data = {}
+
+for reg, details in master.items():
+    for event in details["events"]:
+        event_data.setdefault(event, []).append(
+            reg + "|" + details["name"] + "|" + details["department"]
+        )
+
+for event, participants in event_data.items():
+    with open(event.lower() + ".txt", "w") as f:
+        for participant in participants:
+            f.write(participant + "\n")
+
+
+# Write summary report
+with open("summary_report.txt", "w") as f:
+    f.write("COLLEGE FEST SUMMARY REPORT\n")
+    f.write("Unique registrations: " + str(len(master)) + "\n")
+    f.write("Duplicate registrations: " + str(duplicates) + "\n")
+    f.write("Invalid emails: " + str(invalid) + "\n")
+    f.write("Damaged lines: " + str(damaged) + "\n")
+    f.write("Missing files: " + str(missing) + "\n")
+    f.write("Total events: " + str(len(event_data)) + "\n")
+
+
+# Write error log
+with open("error_log.txt", "w") as f:
+    for error in errors:
+        f.write(error + "\n")
+
+
+# Display final output
+print("\nCOLLEGE FEST REGISTRATION DESK")
+print("--------------------------------")
+
+print("\nMASTER REGISTRATION LIST")
+
+for reg, details in sorted(master.items()):
+    print(reg, "-", details["name"], "-", details["department"])
+
+print("\nTotal unique registrations:", len(master))
+print("Duplicate registrations:", duplicates)
+print("Invalid emails:", invalid)
+print("Damaged lines:", damaged)
+print("Missing department files:", missing)
+
+print("\nEvent-wise participant files created:")
+for event in sorted(event_data):
+    print(event.lower() + ".txt")
+
+print("\nOther files created:")
+print("master_list.txt")
+print("summary_report.txt")
+print("error_log.txt")
+
+print("\nPROCESS COMPLETED SUCCESSFULLY")
