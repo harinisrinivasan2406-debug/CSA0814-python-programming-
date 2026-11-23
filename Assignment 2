@@ -1,1 +1,64 @@
+marks = [78, 85, 92, 67, 88, 95, 73, 81, 90, 86]
 
+
+# ORIGINAL METHOD
+def original_method(marks):
+    highest = marks[0]
+    comparisons = 0
+
+    for i in range(len(marks)):
+        for j in range(len(marks)):
+            comparisons += 1
+            if marks[j] > highest:
+                highest = marks[j]
+
+    return highest, comparisons
+
+
+# REDESIGNED METHOD
+def redesigned_method(marks):
+    highest = marks[0]
+    comparisons = 0
+
+    for mark in marks[1:]:
+        comparisons += 1
+        if mark > highest:
+            highest = mark
+
+    return highest, comparisons
+
+
+# ORIGINAL EXECUTION
+start = perf_counter()
+old_highest, old_count = original_method(marks)
+old_time = perf_counter() - start
+
+
+# REDESIGNED EXECUTION
+start = perf_counter()
+new_highest, new_count = redesigned_method(marks)
+new_time = perf_counter() - start
+
+
+# OUTPUT
+print("STUDENT MARKS ANALYSIS")
+print("----------------------")
+print("Number of students:", len(marks))
+
+print("\nORIGINAL METHOD")
+print("Highest mark:", old_highest)
+print("Comparisons:", old_count)
+print("Execution time:", old_time * 1000, "ms")
+
+print("\nREDESIGNED METHOD")
+print("Highest mark:", new_highest)
+print("Comparisons:", new_count)
+print("Execution time:", new_time * 1000, "ms")
+
+print("\nVALIDATION")
+
+if old_highest == new_highest:
+    print("Both methods give the same result.")
+    print("VALIDATION SUCCESSFUL")
+else:
+    print("VALIDATION FAILED")
