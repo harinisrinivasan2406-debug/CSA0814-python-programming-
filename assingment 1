@@ -1,1 +1,37 @@
-
+def rate_per_litre(fat, snf, season):
+    if season == "summer":
+        base = Decimal("32.00")
+        fat_step = Decimal("0.45")
+    else:
+        base = Decimal("30.00")
+        fat_step = Decimal("0.40")
+    snf_step = Decimal("0.30")
+    fs = int(((fat - Decimal("3.5")) / Decimal("0.1"))
+             .quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    ss = int(((snf - Decimal("8.5")) / Decimal("0.1"))
+             .quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    rate = base + fs * fat_step + ss * snf_step
+    return rate.quantize(
+        Decimal("0.01"), rounding=ROUND_HALF_UP
+    )
+def ten_day_total(payments):
+    return sum(payments, Decimal("0.00"))
+def bonus(total_litres):
+    if total_litres > 500:
+        return Decimal("0.50") * total_litres
+    return Decimal("0.00")
+def final_payment(payments, total_litres):
+    return ten_day_total(payments) + bonus(total_litres)
+fat = Decimal(input("Enter fat percentage: "))
+snf = Decimal(input("Enter SNF percentage: "))
+season = input("Enter season (summer/normal): ").lower()
+litres = Decimal(input("Enter total litres for ten days: "))
+rate = rate_per_litre(fat, snf, season)
+milk_payment = (rate * litres).quantize(
+    Decimal("0.01"), rounding=ROUND_HALF_UP
+)
+total = final_payment([milk_payment], litres)
+print("Rate per litre: ₹", rate)
+print("Milk payment: ₹", milk_payment)
+print("Bonus: ₹", bonus(litres))
+print("Final payment: ₹", total)
